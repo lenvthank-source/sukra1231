@@ -90,6 +90,60 @@ I am now fully aligned with your cosmic charts. Ask me anything about your caree
     triggerCalculation();
   }, [birthDetails, astrologyData]);
 
+  // Handle quick local onboarding without pinging the backend
+  const handleQuickOnboarding = (field: keyof BirthDetails, value: string, userText: string) => {
+    // 1. Instantly update birth details
+    const currentUpdates: Partial<BirthDetails> = { [field]: value as any };
+    updateBirthDetails(currentUpdates);
+
+    // 2. Determine instant bot response
+    let botResponse = '';
+    if (field === 'dob') {
+      botResponse = `I have securely noted your Date of Birth: **${value}**. Next, precisely when were you born? Please select your Time of Birth.`;
+    } else if (field === 'tob') {
+      botResponse = `Time of Birth recorded as **${value}**. Now, what is your Place of Birth? This gives us your exact Earth coordinates.`;
+    } else if (field === 'place') {
+      botResponse = `Place of Birth set to **${value}**. Finally, please select your Gender for the Vedic chart alignment.`;
+    } else if (field === 'gender') {
+      botResponse = `Gender recorded. Generating your cosmic chart...`;
+    }
+
+    // 3. Inject local messages instantly
+    const userMsg: Message = {
+      id: `m-${Date.now()}-user`,
+      role: 'user',
+      content: userText,
+      timestamp: new Date().toISOString()
+    };
+    
+    const botMsg: Message = {
+      id: `m-${Date.now() + 1}-astrologer`,
+      role: 'assistant',
+      content: botResponse,
+      timestamp: new Date().toISOString()
+    };
+    
+    setMessages((prev) => [...prev, userMsg, botMsg]);
+
+    // If place was updated, try to geocode it in the background silently
+    if (field === 'place') {
+      fetch('/api/geocode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ place: value })
+      })
+      .then(r => r.json())
+      .then(geo => {
+        updateBirthDetails({
+          lat: geo.lat,
+          lon: geo.lon,
+          timezone: geo.timezone
+        });
+      })
+      .catch(err => console.error('Silent geocode error', err));
+    }
+  };
+
   // Send message to chatbot endpoint
   const sendMessage = async (text: string) => {
     if (!text.trim()) return;
@@ -239,6 +293,7 @@ I am now fully aligned with your cosmic charts. Ask me anything about your caree
           messages={messages}
           birthDetails={birthDetails}
           onSendMessage={sendMessage}
+          onQuickOnboarding={handleQuickOnboarding}
           onUpdateBirthDetails={updateBirthDetails}
           isLoading={isLoading}
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}

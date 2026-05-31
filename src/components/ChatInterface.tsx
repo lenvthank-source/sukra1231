@@ -6,6 +6,7 @@ interface ChatInterfaceProps {
   messages: Message[];
   birthDetails: Partial<BirthDetails>;
   onSendMessage: (text: string) => void;
+  onQuickOnboarding: (field: keyof BirthDetails, value: string, userText: string) => void;
   onUpdateBirthDetails: (details: Partial<BirthDetails>) => void;
   isLoading: boolean;
   onToggleSidebar?: () => void;
@@ -17,6 +18,7 @@ export default function ChatInterface({
   messages,
   birthDetails,
   onSendMessage,
+  onQuickOnboarding,
   onUpdateBirthDetails,
   isLoading,
   onToggleSidebar,
@@ -81,17 +83,11 @@ export default function ChatInterface({
   };
 
   const selectPlace = (sug: any) => {
-    onUpdateBirthDetails({
-      place: sug.place,
-      lat: sug.lat,
-      lon: sug.lon,
-      timezone: sug.timezone
-    });
+    onQuickOnboarding('place', sug.place, `Born in: ${sug.place}`);
+    // Geocode will run in background in App.tsx
     setPlaceQuery('');
     setPlaceSuggestions([]);
     setShowPlaceDropdown(false);
-    
-    onSendMessage(`Born in: ${sug.place}`);
   };
 
   const handleSend = (e: React.FormEvent) => {
@@ -340,8 +336,7 @@ export default function ChatInterface({
                   <button
                     onClick={() => {
                       if (selDate) {
-                        onUpdateBirthDetails({ dob: selDate });
-                        onSendMessage(`Birth date chosen: ${selDate}`);
+                        onQuickOnboarding('dob', selDate, `Birth date chosen: ${selDate}`);
                       }
                     }}
                     disabled={!selDate}
@@ -399,8 +394,7 @@ export default function ChatInterface({
                   <button
                     onClick={() => {
                       const combined = `${selHour}:${selMinute}`;
-                      onUpdateBirthDetails({ tob: combined });
-                      onSendMessage(`Time of birth set: ${combined}`);
+                      onQuickOnboarding('tob', combined, `Time of birth set: ${combined}`);
                     }}
                     className="w-full mt-2 py-2.5 bg-indigo-700 hover:bg-indigo-600 text-white text-xs font-bold font-sans rounded-xl shadow-md hover:shadow-lg hover:shadow-indigo-600/10 transition-all flex items-center justify-center gap-1.5 outline-none cursor-pointer"
                     id="confirm-custom-time-btn"
@@ -480,8 +474,7 @@ export default function ChatInterface({
                       <button
                         key={gen}
                         onClick={() => {
-                          onUpdateBirthDetails({ gender: gen });
-                          onSendMessage(`Gender: ${gen}`);
+                          onQuickOnboarding('gender', gen, `Gender: ${gen}`);
                         }}
                         className="bg-slate-50 border-2 border-slate-350 hover:border-indigo-500 text-xs text-center font-bold rounded-xl py-2.5 cursor-pointer text-slate-700 hover:text-indigo-950 hover:bg-indigo-50 transition-all focus:outline-none shadow-md"
                         id={`gender-select-${gen}`}

@@ -266,7 +266,7 @@ export default function AstrologySidebar({ data, details, onReset, className = '
                 <span className="text-[10px] font-bold font-sans pr-0.5">Zoom</span>
               </button>
 
-              <svg viewBox="0 0 300 300" textRendering="geometricPrecision" shapeRendering="geometricPrecision" className="w-full h-full stroke-indigo-950 stroke-[1.8] fill-none font-sans font-bold">
+              <svg viewBox="0 0 300 300" className="w-full h-full stroke-indigo-950 stroke-[1.8] fill-none font-sans font-bold">
                 {/* Diagonals */}
                 <line x1="0" y1="0" x2="300" y2="300" style={{ stroke: '#0f172a', strokeWidth: '1.8px' }} />
                 <line x1="300" y1="0" x2="0" y2="300" style={{ stroke: '#0f172a', strokeWidth: '1.8px' }} />
@@ -386,7 +386,7 @@ export default function AstrologySidebar({ data, details, onReset, className = '
 
                   <div className="flex flex-col items-center gap-4">
                     <div className="relative w-full aspect-square bg-white rounded-2xl border-4 border-indigo-950 p-4 shadow-xl max-w-[340px]">
-                      <svg viewBox="0 0 300 300" textRendering="geometricPrecision" shapeRendering="geometricPrecision" className="w-full h-full stroke-indigo-950 stroke-[2] fill-none font-sans font-bold">
+                      <svg viewBox="0 0 300 300" className="w-full h-full stroke-indigo-950 stroke-[2] fill-none font-sans font-bold">
                         {/* Diagonals */}
                         <line x1="0" y1="0" x2="300" y2="300" style={{ stroke: '#0f172a', strokeWidth: '2px' }} />
                         <line x1="300" y1="0" x2="0" y2="300" style={{ stroke: '#0f172a', strokeWidth: '2px' }} />

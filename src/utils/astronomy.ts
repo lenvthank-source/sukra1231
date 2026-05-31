@@ -1,4 +1,5 @@
-import { BirthDetails, AstrologyData, PlanetPosition, HouseDetails, DashaPeriod, YogaDetails } from '../types';
+import { BirthDetails, AstrologyData, PlanetPosition, HouseDetails, DashaPeriod, YogaDetails } from '../types.js';
+import Astronomy from 'astronomy-engine';
 
 // Vedic Signs (Rashis)
 export const RASHIS = [
@@ -105,170 +106,40 @@ interface PlanetOrbitElements {
 }
 
 // Approximate orbital elements at J2000 for planets (Sun acts as Earth barycenter inverse)
-function getPlanetCoordinates(name: string, t: number, jd: number): { lon: number, retrograde: boolean } {
-  let elements: PlanetOrbitElements;
-  let dL = 0, da = 0, de = 0, di = 0, do_deg = 0, dp = 0;
+function getPlanetCoordinates(name: string, t: number, jd: number, utcDate?: Date): { lon: number, retrograde: boolean } {
+  if (!utcDate) {
+    utcDate = new Date();
+  }
+  const astroTime = new Astronomy.AstroTime(utcDate);
 
-  // Let's seed astronomical values for 2000.0 + t centuries
-  switch (name) {
-    case 'Sun':
-      elements = {
-        L: 280.46645 + 36000.76983 * t,
-        a: 1.000001018,
-        e: 0.01670863 - 0.000042037 * t,
-        i: 0,
-        o: 0,
-        p: 282.93735 + 0.32252 * t
-      };
-      break;
-    case 'Moon':
-      // Highly simplified Moon orbit
-      elements = {
-        L: 218.31643 + 481267.8813 * t,
-        a: 0.00257, // AU
-        e: 0.054900489,
-        i: 5.145396,
-        o: 125.04452 - 1934.13626 * t,
-        p: 83.35324 + 4069.01371 * t
-      };
-      break;
-    case 'Mercury':
-      elements = {
-        L: 252.25084 + 149472.6741 * t,
-        a: 0.38709893,
-        e: 0.20563069 + 0.000020407 * t,
-        i: 7.00487 + 0.00607 * t,
-        o: 48.33167 - 0.12516 * t,
-        p: 77.45645 + 0.15901 * t
-      };
-      break;
-    case 'Venus':
-      elements = {
-        L: 181.97973 + 58517.81538 * t,
-        a: 0.72333199,
-        e: 0.00677323 - 0.000047765 * t,
-        i: 3.39471 + 0.00079 * t,
-        o: 76.68069 - 0.27769 * t,
-        p: 131.53298 + 0.00213 * t
-      };
-      break;
-    case 'Mars':
-      elements = {
-        L: 355.45332 + 19140.30268 * t,
-        a: 1.52366231,
-        e: 0.09341233 + 0.000119024 * t,
-        i: 1.85061 - 0.00724 * t,
-        o: 49.57854 - 0.29498 * t,
-        p: 336.04084 + 0.44383 * t
-      };
-      break;
-    case 'Jupiter':
-      elements = {
-        L: 34.40438 + 3034.74612 * t,
-        a: 5.20336301,
-        e: 0.04839266 - 0.0001288 * t,
-        i: 1.3053 + 0.00415 * t,
-        o: 100.55615 + 0.2038 * t,
-        p: 14.75385 + 0.1911 * t
-      };
-      break;
-    case 'Saturn':
-      elements = {
-        L: 49.94432 + 1222.11379 * t,
-        a: 9.53707032,
-        e: 0.0541506 + 0.00036762 * t,
-        i: 2.48446 + 0.00193 * t,
-        o: 113.71504 - 0.25908 * t,
-        p: 92.43194 - 0.41897 * t
-      };
-      break;
-    case 'Rahu': // North Node (Mean Node approximation)
-      // Node retrogrades ~19.34 degrees per year
-      const nodePos = normalize360(125.04452 - 1934.13626 * t);
-      return { lon: nodePos, retrograde: true };
-    case 'Ketu': // South Node (Always exactly opposite Rahu)
-      const oppositeNode = normalize360(125.04452 - 1934.13626 * t + 180.0);
-      return { lon: oppositeNode, retrograde: true };
-    default:
-      return { lon: 0, retrograde: false };
+  if (name === 'Rahu' || name === 'Ketu') {
+    // North Node (Mean Node approximation)
+    // Node retrogrades ~19.34 degrees per year
+    let nodePos = normalize360(125.04452 - 1934.13626 * t);
+    
+    if (name === 'Ketu') {
+      nodePos = normalize360(nodePos + 180.0);
+    }
+    return { lon: nodePos, retrograde: true };
   }
 
-  // Calculate coordinates relative to Earth
-  // Resolve eccentric anomaly by Kepler's equation: M = E - e*sin(E)
-  const M = normalize360(elements.L - elements.p);
-  const mRad = (M * Math.PI) / 180;
-  let E = mRad;
-  let diff = 1.0;
-  for (let j = 0; j < 5 && diff > 0.0001; j++) {
-    const eNext = E - (E - elements.e * Math.sin(E) - mRad) / (1 - elements.e * Math.cos(E));
-    diff = Math.abs(eNext - E);
-    E = eNext;
-  }
+  // Proper Planets using precision engine
+  // @ts-ignore
+  const geoVec = Astronomy.GeoVector(name, astroTime, true);
+  const ecl = Astronomy.Ecliptic(geoVec);
 
-  // Calculate coordinates in orbital plane
-  const x = elements.a * (Math.cos(E) - elements.e);
-  const y = elements.a * Math.sqrt(1 - elements.e * elements.e) * Math.sin(E);
+  // Check Retrograde
+  const pastTime = astroTime.AddDays(-0.01);
+  // @ts-ignore
+  const pastGeoVec = Astronomy.GeoVector(name, pastTime, true);
+  const pastEcl = Astronomy.Ecliptic(pastGeoVec);
+  
+  // Calculate difference safely around 360 bounds
+  let diff = ecl.elon - pastEcl.elon;
+  if (diff > 180) diff -= 360;
+  if (diff < -180) diff += 360;
 
-  // True anomaly and distance
-  const r = Math.sqrt(x * x + y * y);
-  let v = Math.atan2(y, x) * (180 / Math.PI);
-  v = normalize360(v);
-
-  // Heliocentric position
-  const lon_orb = normalize360(v + elements.p);
-
-  // Simple geo-centric projection
-  let geocentricLon = lon_orb;
-  if (name !== 'Sun' && name !== 'Moon') {
-    // Correct by Earth (Sun inverse) position
-    const tSun = (jd - 2451545.0) / 36525.0;
-    const MSun = normalize360(280.46645 + 36000.76983 * tSun - (282.93735 + 0.32252 * tSun));
-    const mRadSun = (MSun * Math.PI) / 180;
-    const eSun = 0.01670863 - 0.000042037 * tSun;
-    const xSun = Math.cos(mRadSun) - eSun;
-    const ySun = Math.sin(mRadSun);
-    const lonSun = normalize360(Math.atan2(ySun, xSun) * (180 / Math.PI) + 282.93735);
-
-    // Project planetary longitude to geocentric by vector addition
-    const radSun = (lonSun * Math.PI) / 180;
-    const radPlan = (lon_orb * Math.PI) / 180;
-    const rEarth = 1.0; // AU
-    const planetX = r * Math.cos(radPlan) - rEarth * Math.cos(radSun);
-    const planetY = r * Math.sin(radPlan) - rEarth * Math.sin(radSun);
-    geocentricLon = normalize360(Math.atan2(planetY, planetX) * (180 / Math.PI));
-  } else if (name === 'Sun') {
-    // Sun is simply Earth inverse
-    geocentricLon = normalize360(lon_orb);
-  } else if (name === 'Moon') {
-    // Moon is already geocentric in elements
-    geocentricLon = normalize360(lon_orb);
-  }
-
-  // Simple determination of planet retrogrades (approximate outer and inner retrograde conditions on JD)
-  let isRetro = false;
-  if (name === 'Mercury') {
-    const synodicPeriod = 115.88;
-    const phase = (jd % synodicPeriod) / synodicPeriod;
-    isRetro = phase > 0.4 && phase < 0.6;
-  } else if (name === 'Venus') {
-    const synodicPeriod = 583.92;
-    const phase = (jd % synodicPeriod) / synodicPeriod;
-    isRetro = phase > 0.45 && phase < 0.55;
-  } else if (name === 'Mars') {
-    const synodicPeriod = 779.94;
-    const phase = (jd % synodicPeriod) / synodicPeriod;
-    isRetro = phase > 0.47 && phase < 0.53;
-  } else if (name === 'Jupiter') {
-    const synodicPeriod = 398.88;
-    const phase = (jd % synodicPeriod) / synodicPeriod;
-    isRetro = phase > 0.42 && phase < 0.58;
-  } else if (name === 'Saturn') {
-    const synodicPeriod = 378.09;
-    const phase = (jd % synodicPeriod) / synodicPeriod;
-    isRetro = phase > 0.43 && phase < 0.57;
-  }
-
-  return { lon: geocentricLon, retrograde: isRetro };
+  return { lon: ecl.elon, retrograde: diff < 0 };
 }
 
 // Calculate the Ascendant (Lagna) in degrees
@@ -319,6 +190,13 @@ export function computeAstrology(details: BirthDetails): AstrologyData {
   const t = (jd - 2451545.0) / 36525.0; // centuries relative to J2000
   const ayanamsha = getAyanamsha(jd);
 
+  const [year, month, day] = details.dob.split('-').map(Number);
+  const [hour, min] = details.tob.split(':').map(Number);
+  const tzMinutes = details.timezone * 60;
+  // Compute absolute UTC time for this birth event
+  const targetUtcTime = Date.UTC(year, month - 1, day, hour, min) - (tzMinutes * 60000);
+  const utcDate = new Date(targetUtcTime);
+
   // 1. Calculate Sidereal Ascendant (Lagna)
   const tropicalAsc = getAscendant(jd, details.lat, details.lon);
   const siderealAsc = normalize360(tropicalAsc - ayanamsha);
@@ -341,7 +219,7 @@ export function computeAstrology(details: BirthDetails): AstrologyData {
   // 2. Calculate Planets (apply Lahiri Ayanamsha)
   const planetNames = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Rahu', 'Ketu'];
   const planets: PlanetPosition[] = planetNames.map((name) => {
-    const tropicalCoords = getPlanetCoordinates(name, t, jd);
+    const tropicalCoords = getPlanetCoordinates(name, t, jd, utcDate);
     const siderealCoords = normalize360(tropicalCoords.lon - ayanamsha);
     const rashi = getRashiDetails(siderealCoords);
     const nakshatra = getNakshatraDetails(siderealCoords);
@@ -364,7 +242,7 @@ export function computeAstrology(details: BirthDetails): AstrologyData {
 
   const sun = planets.find((p) => p.name === 'Sun')!;
   const moon = planets.find((p) => p.name === 'Moon')!;
-  const moonNakshatra = getNakshatraDetails(normalize360(getPlanetCoordinates('Moon', t, jd).lon - ayanamsha));
+  const moonNakshatra = getNakshatraDetails(normalize360(getPlanetCoordinates('Moon', t, jd, utcDate).lon - ayanamsha));
 
   // 3. Detect Yogas (Combinations)
   const yogas: YogaDetails[] = [
@@ -427,7 +305,7 @@ export function computeAstrology(details: BirthDetails): AstrologyData {
     Ketu: 7, Venus: 20, Sun: 6, Moon: 10, Mars: 7, Rahu: 18, Jupiter: 16, Saturn: 19, Mercury: 17
   };
 
-  const moonSiderealCoord = normalize360(getPlanetCoordinates('Moon', t, jd).lon - ayanamsha);
+  const moonSiderealCoord = normalize360(getPlanetCoordinates('Moon', t, jd, utcDate).lon - ayanamsha);
   const nakIndex = Math.floor(moonSiderealCoord / (360 / 27));
   const startingLord = dashaLords[nakIndex % 9];
   const startingLordIndex = dashaLords.indexOf(startingLord);
