@@ -1,0 +1,6 @@
+{
+  "name": "AI Astrology Chatbot Prototype",
+  "description": "An interactive full-stack Vedic astrology chatbot that collects birth details, computes precise planetary placements, Nakshatras, and Dashas, and performs smart AI readings using Gemini.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
