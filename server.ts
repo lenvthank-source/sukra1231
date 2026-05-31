@@ -276,10 +276,11 @@ Respond ONLY with the raw JSON string inside \`\`\`json \`\`\` block. Avoid any 
 
         try {
           const extractionResponse = await generateContentWithRetryAndFallback({
-            model: 'gemini-3.5-flash',
+            model: 'gemini-3.1-flash-lite',
             contents: extractionResponseContext(messages, missingPrompt),
             config: {
-              responseMimeType: 'application/json'
+              responseMimeType: 'application/json',
+              thinkingConfig: { thinkingLevel: 'MEDIUM' as any }
             }
           });
 
@@ -340,11 +341,12 @@ Respond with detailed, naturally formatted Markdown. Engage in a natural convers
       }));
 
       const geminiResponse = await generateContentWithRetryAndFallback({
-        model: 'gemini-3.5-flash',
+        model: 'gemini-3.1-flash-lite',
         contents: chatHistoryForGemini,
         config: {
           systemInstruction,
-          temperature: 0.7
+          temperature: 0.7,
+          thinkingConfig: { thinkingLevel: 'MEDIUM' as any }
         }
       });
 

@@ -120,9 +120,12 @@ export async function computeAstrologyWithFreeAstroApi(details: BirthDetails): P
           sign: rashiName,
           signSymbol: getSignSymbol(rashiName),
           degree: Number(degree.toFixed(2)),
+          normDegree: fullDegree,
+          combust: !!p.is_combust || !!p.combust,
           house: Number(p.house || p.house_number || 1),
           retrograde: !!(p.isRetrograde || p.is_retrograde || p.retrograde),
           nakshatra: nakDetails.name,
+          pada: nakDetails.pada,
           nakshatraLord: nakDetails.lord
         };
       });

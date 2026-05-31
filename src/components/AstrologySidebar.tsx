@@ -398,22 +398,46 @@ export default function AstrologySidebar({ data, details, onReset, className = '
                                     {rashiNum}
                                   </text>
                                   <g>
-                                    {occupants.map((pl, i) => (
+                                    {occupants.map((pl, i) => {
+                                      // Arrange planets in a small grid if there are many
+                                      let ox = 0;
+                                      let oy = 10;
+                                      if (occupants.length === 2) {
+                                        ox = i === 0 ? -12 : 12;
+                                      } else if (occupants.length === 3) {
+                                        ox = i === 0 ? -14 : i === 1 ? 14 : 0;
+                                        oy += i === 2 ? 16 : 0;
+                                      } else if (occupants.length > 3) {
+                                        ox = (i % 2 === 0 ? -14 : 14);
+                                        oy += Math.floor(i / 2) * 16;
+                                      }
+                                      
+                                      return (
                                       <text 
                                         key={pl.name}
-                                        x={comp.x + (i === 0 && occupants.length > 1 ? -14 : i === 1 ? 14 : 0)} 
-                                        y={comp.y + 10 + (i > 1 ? 16 : 0)}
+                                        x={comp.x + ox} 
+                                        y={comp.y + oy}
                                         textAnchor="middle" 
                                         fontSize="13" 
-                                        className="fill-slate-800 font-sans tracking-tight font-black"
-                                        style={{ fill: pl.retrograde ? '#0f172a' : '#1e293b' }}
+                                        className="font-sans tracking-tight font-black"
+                                        style={{ 
+                                          fill: pl.name === 'Sun' ? '#ef4444' :
+                                                pl.name === 'Moon' ? '#8b5cf6' :
+                                                pl.name === 'Jupiter' ? '#c026d3' :
+                                                pl.name === 'Venus' ? '#22c55e' :
+                                                pl.name === 'Mars' ? '#16a34a' :
+                                                pl.name === 'Mercury' ? '#3b82f6' :
+                                                pl.name === 'Saturn' ? '#ef4444' :
+                                                ['Rahu', 'Ketu'].includes(pl.name) ? '#d97706' : '#1e293b'
+                                        }}
                                       >
                                         {getPlanetAbbr(pl.name)}
-                                        {pl.retrograde ? <tspan dy="-6" fontSize="9" fill="#0f172a">ᴿ</tspan> : ''}
-                                        {pl.combust ? <tspan dy="-6" fontSize="9" fill="#dc2626">ᶜ</tspan> : ''}
+                                        {pl.retrograde ? <tspan dy="-6" fontSize="9">ᴿ</tspan> : ''}
+                                        {pl.combust ? <tspan dy="-6" fontSize="9">ᶜ</tspan> : ''}
                                         {pl.retrograde || pl.combust ? <tspan dy="6"></tspan> : ''}
                                       </text>
-                                    ))}
+                                      );
+                                    })}
                                   </g>
                                 </g>
                               );
