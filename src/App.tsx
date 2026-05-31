@@ -38,7 +38,7 @@ export default function App() {
     });
   };
 
-  // Trigger chart calculations when all 4 fields are collected
+  // Trigger chart calculations when all fields including coordinates are collected
   useEffect(() => {
     const triggerCalculation = async () => {
       if (
@@ -46,6 +46,8 @@ export default function App() {
         birthDetails.tob &&
         birthDetails.place &&
         birthDetails.gender &&
+        birthDetails.lat !== undefined && 
+        birthDetails.lon !== undefined &&
         !astrologyData
       ) {
         setIsLoading(true);
@@ -92,9 +94,13 @@ I am now fully aligned with your cosmic charts. Ask me anything about your caree
 
   // Handle quick local onboarding without pinging the backend
   const handleQuickOnboarding = (field: keyof BirthDetails, value: string, userText: string) => {
-    // 1. Instantly update birth details
+    // 1. Instantly update birth details and clear old chart if re-running
     const currentUpdates: Partial<BirthDetails> = { [field]: value as any };
     updateBirthDetails(currentUpdates);
+    
+    if (astrologyData) {
+      setAstrologyData(null);
+    }
 
     // 2. Determine instant bot response
     let botResponse = '';

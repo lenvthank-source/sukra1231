@@ -21,6 +21,15 @@ export default function AstrologySidebar({ data, details, onReset, className = '
     return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
+  const formatLongitude = (degree?: number) => {
+    if (degree === undefined) return '';
+    const signDeg = degree % 30;
+    const d = Math.floor(signDeg);
+    const m = Math.floor((signDeg - d) * 60);
+    const s = Math.floor((signDeg - d - m / 60) * 3600);
+    return `${d.toString().padStart(2, '0')}-${m.toString().padStart(2, '0')}-${s.toString().padStart(2, '0')}`;
+  };
+
   if (!data) {
     return (
       <div className={`flex flex-col items-center justify-center h-full p-8 text-center bg-white md:border-l border-slate-300 text-slate-600 relative overflow-y-auto ${className} shadow-inner`}>
@@ -259,11 +268,11 @@ export default function AstrologySidebar({ data, details, onReset, className = '
               <button
                 onClick={() => setShowPopout(true)}
                 className="absolute top-3 right-3 bg-white/95 border-2 border-indigo-950 hover:bg-slate-100 text-indigo-950 p-1.5 rounded-xl transition-all shadow-md cursor-pointer z-10 flex items-center justify-center gap-1 hover:scale-105 active:scale-95"
-                title="Pop-out and Zoom Chart"
+                title="Full Screen Classic Report"
                 id="pop-out-chart-btn"
               >
                 <Eye className="w-4 h-4 text-indigo-700 animate-pulse" />
-                <span className="text-[10px] font-bold font-sans pr-0.5">Zoom</span>
+                <span className="text-[10px] font-bold font-sans pr-0.5 whitespace-nowrap">Full Report</span>
               </button>
 
               <svg viewBox="0 0 300 300" className="w-full h-full stroke-indigo-950 stroke-[1.8] fill-none font-sans font-bold">
@@ -290,13 +299,7 @@ export default function AstrologySidebar({ data, details, onReset, className = '
                         y={comp.y - 12} 
                         textAnchor="middle" 
                         fontSize="9" 
-                        className="fill-slate-400 font-semibold font-mono"
-                        style={{
-                          paintOrder: 'stroke fill',
-                          stroke: '#ffffff',
-                          strokeWidth: '2.5px',
-                          strokeLinejoin: 'round'
-                        }}
+                        className="fill-slate-500 font-semibold font-mono"
                       >
                         H{comp.num}
                       </text>
@@ -307,13 +310,7 @@ export default function AstrologySidebar({ data, details, onReset, className = '
                         y={comp.y} 
                         textAnchor="middle" 
                         fontSize="11" 
-                        className="fill-amber-650 font-extrabold"
-                        style={{
-                          paintOrder: 'stroke fill',
-                          stroke: '#ffffff',
-                          strokeWidth: '3.5px',
-                          strokeLinejoin: 'round'
-                        }}
+                        className="fill-amber-700 font-extrabold"
                       >
                         {rashiNum}
                       </text>
@@ -333,10 +330,6 @@ export default function AstrologySidebar({ data, details, onReset, className = '
                                 className="font-extrabold tracking-tighter"
                                 style={{
                                   fontWeight: '900',
-                                  paintOrder: 'stroke fill',
-                                  stroke: '#ffffff',
-                                  strokeWidth: '3px',
-                                  strokeLinejoin: 'round',
                                   fill: pl.name === 'Sun' ? '#b45309' :
                                         pl.name === 'Moon' ? '#1e40af' :
                                         pl.name === 'Jupiter' ? '#065f46' :
@@ -359,130 +352,168 @@ export default function AstrologySidebar({ data, details, onReset, className = '
               * The integers represent Rashi indices (e.g. 1=Mesha, 10=Makara). H1 is the Lagna (top center). Click <span className="font-semibold text-indigo-700">Zoom</span> to pop out.
             </div>
 
-            {/* Custom Pop-out High Contrast Zoom Modal overlay */}
+            {/* Custom Pop-out High Contrast Full Screen Report */}
             {showPopout && (
               <div 
-                className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 animate-fade-in"
+                className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-slate-900/60 backdrop-blur-sm animate-fade-in text-slate-800"
                 onClick={() => setShowPopout(false)}
                 id="chart-popout-overlay"
               >
                 <div 
-                  className="relative w-full max-w-[440px] bg-white border-2 border-indigo-950 rounded-2xl p-6 shadow-2xl overflow-hidden animate-zoom-in text-slate-800"
+                  className="relative w-full max-w-[1000px] h-full max-h-[90vh] bg-[#fdfcf8] border-4 border-slate-300 rounded overflow-y-auto shadow-2xl flex flex-col"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="flex items-center justify-between mb-4 pb-2.5 border-b border-slate-200">
-                    <div className="flex items-center gap-2">
-                       <Compass className="w-5 h-5 text-indigo-600 animate-spin-slow" />
-                      <h3 className="font-sans font-bold text-base text-slate-900 uppercase tracking-tight">Expanded Kundli Chart</h3>
-                    </div>
+                  <div className="sticky top-0 bg-[#fdfcf8] border-b border-slate-300 p-4 flex items-center justify-between z-20 shadow-sm">
+                    <h3 className="font-serif font-bold text-xl text-slate-900 tracking-wide">
+                      Comprehensive Vedic Report
+                    </h3>
                     <button
                       onClick={() => setShowPopout(false)}
-                      className="px-3 py-1.5 text-xs bg-slate-100 hover:bg-slate-250 border-2 border-indigo-950 hover:text-red-600 font-bold text-slate-700 rounded-xl cursor-pointer transition-all"
+                      className="px-4 py-1.5 text-sm bg-slate-200 hover:bg-slate-300 border border-slate-400 font-bold text-slate-800 rounded cursor-pointer transition-all tracking-wide shadow-sm"
                       id="close-popout-btn"
                     >
-                      ✕ Close
+                      Close ✕
                     </button>
                   </div>
 
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="relative w-full aspect-square bg-white rounded-2xl border-4 border-indigo-950 p-4 shadow-xl max-w-[340px]">
-                      <svg viewBox="0 0 300 300" className="w-full h-full stroke-indigo-950 stroke-[2] fill-none font-sans font-bold">
-                        {/* Diagonals */}
-                        <line x1="0" y1="0" x2="300" y2="300" style={{ stroke: '#0f172a', strokeWidth: '2px' }} />
-                        <line x1="300" y1="0" x2="0" y2="300" style={{ stroke: '#0f172a', strokeWidth: '2px' }} />
-                        
-                        {/* Inner Diamond */}
-                        <polygon points="150,0 300,150 150,300 0,150" style={{ stroke: '#0f172a', strokeWidth: '2px' }} />
-                        
-                        {/* Outer frame */}
-                        <rect x="0" y="0" width="300" height="300" style={{ stroke: '#0f172a', strokeWidth: '3px' }} />
-
-                        {/* Draw House Numbers and Planet Lists */}
-                        {houseCompartments.map((comp) => {
-                          const occupants = getPlanetsInHouse(comp.num);
-                          const rashiNum = getHouseRashiNum(comp.num);
-                          
-                          return (
-                            <g key={comp.num}>
-                              {/* Compact Compartment Label H1-H12 */}
-                              <text 
-                                x={comp.x} 
-                                y={comp.y - 13} 
-                                textAnchor="middle" 
-                                fontSize="9" 
-                                className="fill-slate-400 font-extrabold font-mono"
-                                style={{
-                                  paintOrder: 'stroke fill',
-                                  stroke: '#ffffff',
-                                  strokeWidth: '3.5px',
-                                  strokeLinejoin: 'round'
-                                }}
-                              >
-                                H{comp.num}
-                              </text>
-
-                              {/* Rashi Number in high readability amber/slate style */}
-                              <text 
-                                x={comp.x} 
-                                y={comp.y} 
-                                textAnchor="middle" 
-                                fontSize="13" 
-                                className="fill-amber-700 font-black"
-                                style={{
-                                  paintOrder: 'stroke fill',
-                                  stroke: '#ffffff',
-                                  strokeWidth: '4.5px',
-                                  strokeLinejoin: 'round'
-                                }}
-                              >
-                                {rashiNum}
-                              </text>
-
-                              {/* Individual Planet Abbreviations placed inside */}
-                              {occupants.length > 0 && (
-                                <g>
-                                  {occupants.map((pl, idx) => {
-                                    const offsetX = occupants.length === 1 ? 0 : (idx - (occupants.length - 1) / 2) * 23;
-                                    return (
-                                      <text
+                  <div className="p-4 md:p-6 flex flex-col gap-8">
+                    {/* Charts Row */}
+                    <div className="flex flex-col md:flex-row gap-6">
+                      <div className="flex-1 bg-white p-4 justify-items-center">
+                        <h4 className="font-bold font-serif text-lg mb-4 text-slate-800 text-left w-full max-w-[340px]">Lagna Chart</h4>
+                        <div className="relative w-full max-w-[340px] aspect-square mx-auto">
+                          <svg viewBox="0 0 300 300" className="w-full h-full stroke-orange-500 stroke-[1.5] fill-none font-sans font-bold">
+                            <rect x="0" y="0" width="300" height="300" className="stroke-orange-500" strokeWidth="2" />
+                            <line x1="0" y1="0" x2="300" y2="300" />
+                            <line x1="300" y1="0" x2="0" y2="300" />
+                            <polygon points="150,0 300,150 150,300 0,150" strokeWidth="1.5" />
+                            
+                            {houseCompartments.map((comp) => {
+                              const rashiNum = getHouseRashiNum(comp.num);
+                              const occupants = getPlanetsInHouse(comp.num);
+                              
+                              return (
+                                <g key={`pop-h-${comp.num}`}>
+                                  <text x={comp.x} y={comp.y - 12} textAnchor="middle" fontSize="12" className="fill-orange-600 font-serif">
+                                    {rashiNum}
+                                  </text>
+                                  <g>
+                                    {occupants.map((pl, i) => (
+                                      <text 
                                         key={pl.name}
-                                        x={comp.x + offsetX}
-                                        y={comp.y + 18}
-                                        textAnchor="middle"
-                                        fontSize="11"
-                                        className="font-black tracking-tighter"
-                                        style={{
-                                          fontWeight: '900',
-                                          paintOrder: 'stroke fill',
-                                          stroke: '#ffffff',
-                                          strokeWidth: '3.5px',
-                                          strokeLinejoin: 'round',
-                                          fill: pl.name === 'Sun' ? '#b45309' :
-                                                pl.name === 'Moon' ? '#1e40af' :
-                                                pl.name === 'Jupiter' ? '#065f46' :
-                                                ['Rahu', 'Ketu'].includes(pl.name) ? '#701a75' : '#0f172a'
-                                        }}
+                                        x={comp.x + (i === 0 && occupants.length > 1 ? -14 : i === 1 ? 14 : 0)} 
+                                        y={comp.y + 10 + (i > 1 ? 16 : 0)}
+                                        textAnchor="middle" 
+                                        fontSize="13" 
+                                        className="fill-slate-800 font-sans tracking-tight font-black"
+                                        style={{ fill: pl.retrograde ? '#0f172a' : '#1e293b' }}
                                       >
-                                        {getPlanetAbbr(pl.name)}{pl.retrograde ? 'ᴿ' : ''}
+                                        {getPlanetAbbr(pl.name)}
+                                        {pl.retrograde ? <tspan dy="-6" fontSize="9" fill="#0f172a">ᴿ</tspan> : ''}
+                                        {pl.combust ? <tspan dy="-6" fontSize="9" fill="#dc2626">ᶜ</tspan> : ''}
+                                        {pl.retrograde || pl.combust ? <tspan dy="6"></tspan> : ''}
                                       </text>
-                                    );
-                                  })}
+                                    ))}
+                                  </g>
                                 </g>
-                              )}
-                            </g>
-                          );
-                        })}
-                      </svg>
+                              );
+                            })}
+                          </svg>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 bg-white p-4 flex flex-col justify-items-center opacity-70 grayscale sepia-[.3]">
+                         <h4 className="font-bold font-serif text-lg mb-4 text-slate-800 text-left w-full max-w-[340px]">Navamsa Chart</h4>
+                         <div className="relative w-full max-w-[340px] aspect-square mx-auto flex items-center justify-center border border-slate-300">
+                           <p className="text-center font-serif text-slate-500 font-bold px-8">(D9 Navamsa Chart under development. Please rely on Lagna positions for now.)</p>
+                         </div>
+                      </div>
                     </div>
 
-                    <div className="w-full text-center space-y-1 mt-2">
-                      <p className="text-xs font-bold text-indigo-900 bg-indigo-50 border border-indigo-250 py-2 px-3 rounded-xl font-sans inline-block">
-                        {details.gender === 'Male' ? 'Shri' : details.gender === 'Female' ? 'Shrimati' : ''} {details.place?.split(',')[0]} (Sidereal Lahiri Chart)
-                      </p>
-                      <div className="flex justify-center gap-4 text-[11px] font-mono font-extrabold text-slate-500 mt-1">
-                        <div>Ascendant: <span className="text-indigo-950 font-black">{data.ascendant.split(' ')[0]} ({data.ascendantDegree}°)</span></div>
-                        <div>Moon Sign: <span className="text-indigo-950 font-black">{data.moonSign.split(' ')[0]}</span></div>
+                    {/* Tables Row */}
+                    <div className="flex flex-col lg:flex-row gap-6 mt-4">
+                      
+                      {/* Planetary Table */}
+                      <div className="flex-[5] bg-white border border-slate-300 shadow-sm overflow-x-auto">
+                        <table className="w-full text-left font-sans whitespace-nowrap">
+                          <thead className="bg-[#fef3c7] border-b border-slate-300 text-amber-900 border-t border-t-amber-100">
+                            <tr className="text-[13px]">
+                              <th className="p-3 font-bold border-r border-slate-300">Planets</th>
+                              <th className="p-3 font-bold border-r border-slate-300 text-center">C</th>
+                              <th className="p-3 font-bold border-r border-slate-300 text-center">R</th>
+                              <th className="p-3 font-bold border-r border-slate-300">Rashi</th>
+                              <th className="p-3 font-bold border-r border-slate-300">Longitude</th>
+                              <th className="p-3 font-bold border-r border-slate-300">Nakshatra</th>
+                              <th className="p-3 font-bold border-r border-slate-300 text-center">Pada</th>
+                              <th className="p-3 font-bold">Relation</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-200 text-slate-800 text-sm">
+                            <tr className="hover:bg-slate-50">
+                              <td className="p-3 border-r border-slate-200 font-medium">Asc</td>
+                              <td className="p-3 border-r border-slate-200 text-center"></td>
+                              <td className="p-3 border-r border-slate-200 text-center"></td>
+                              <td className="p-3 border-r border-slate-200">{data.ascendant.split(' ')[0]}</td>
+                              <td className="p-3 border-r border-slate-200 font-mono tracking-tighter text-[13px]">{formatLongitude(data.ascendantDegree)}</td>
+                              <td className="p-3 border-r border-slate-200">{data.nakshatra}</td>
+                              <td className="p-3 border-r border-slate-200 text-center">{data.nakshatraPada}</td>
+                              <td className="p-3"></td>
+                            </tr>
+                            {data.planets.map((p) => (
+                              <tr key={p.name} className="hover:bg-slate-50">
+                                <td className="p-3 border-r border-slate-200 font-medium">
+                                  {p.name === 'Sun' || p.name === 'Moon' || p.name === 'Mars' ? p.name : 
+                                   p.name === 'Mercury' ? 'Merc' : 
+                                   p.name === 'Jupiter' ? 'Jupt' :
+                                   p.name === 'Venus' ? 'Venu' :
+                                   p.name === 'Saturn' ? 'Satn' : p.name}
+                                </td>
+                                <td className="p-3 border-r border-slate-200 text-center font-bold text-amber-800">
+                                  {p.combust ? 'C' : ''}
+                                </td>
+                                <td className="p-3 border-r border-slate-200 text-center font-bold text-indigo-800 opacity-80">
+                                  {p.retrograde ? 'R' : 'D'} 
+                                </td>
+                                <td className="p-3 border-r border-slate-200">{p.sign.split(' ')[0]}</td>
+                                <td className="p-3 border-r border-slate-200 font-mono tracking-tighter text-[13px]">{formatLongitude(p.normDegree)}</td>
+                                <td className="p-3 border-r border-slate-200">{p.nakshatra}</td>
+                                <td className="p-3 border-r border-slate-200 text-center">{p.pada}</td>
+                                <td className="p-3">{p.relation || 'Neutral'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
+
+                      {/* Dashas Table */}
+                      <div className="flex-[2] bg-white border border-slate-300 shadow-sm overflow-hidden flex flex-col min-w-[240px]">
+                        <div className="bg-[#fef3c7] text-amber-900 border-b border-slate-300 p-3 font-semibold text-[15px]">
+                          Vimshottari Dasha
+                        </div>
+                        <div className="p-4 border-b border-slate-200 text-center text-sm flex-1 bg-slate-50">
+                          Balance Of Dasha : <br/>
+                          <span className="text-slate-700 font-mono uppercase font-bold mt-1 inline-block">
+                            {data.dashas[0]?.planet.toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="flex-1 overflow-auto max-h-[460px]">
+                          <table className="w-full text-left font-sans text-[13px]">
+                            <tbody className="divide-y divide-slate-100 text-slate-800">
+                              {data.dashas.map((dasha) => (
+                                <tr key={dasha.planet} className="hover:bg-slate-50 transition-colors">
+                                  <td className="p-3 w-1/2 font-medium border-r border-slate-100">
+                                    {getPlanetAbbr(dasha.planet)}
+                                  </td>
+                                  <td className="p-3 w-1/2 font-mono text-xs opacity-90 text-right">
+                                    {new Date(dasha.endDate.split('/').reverse().join('-')).toLocaleDateString('en-GB')}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
                     </div>
                   </div>
                 </div>

@@ -93,6 +93,44 @@ async function startServer() {
         return res.status(400).json({ error: 'Birth place query is required' });
       }
 
+      // Fast-dictionary memory to bypass rate-limited Nominatim
+      const p = place.toLowerCase().replace(/[^a-z]/g, '');
+      const cityDict: Record<string, any> = {
+        'newyork': { lat: 40.71, lon: -74.00, tz: -5 },
+        'london': { lat: 51.50, lon: -0.12, tz: 0 },
+        'mumbai': { lat: 18.97, lon: 72.82, tz: 5.5 },
+        'delhi': { lat: 28.61, lon: 77.20, tz: 5.5 },
+        'bangalore': { lat: 12.97, lon: 77.59, tz: 5.5 },
+        'chennai': { lat: 13.08, lon: 80.27, tz: 5.5 },
+        'kolkata': { lat: 22.57, lon: 88.36, tz: 5.5 },
+        'pune': { lat: 18.52, lon: 73.85, tz: 5.5 },
+        'hyderabad': { lat: 17.38, lon: 78.48, tz: 5.5 },
+        'ahmedabad': { lat: 23.02, lon: 72.57, tz: 5.5 },
+        'losangeles': { lat: 34.05, lon: -118.24, tz: -8 },
+        'chicago': { lat: 41.87, lon: -87.62, tz: -6 },
+        'toronto': { lat: 43.65, lon: -79.38, tz: -5 },
+        'sydney': { lat: -33.86, lon: 151.20, tz: 10 },
+        'melbourne': { lat: -37.81, lon: 144.96, tz: 10 },
+        'dubai': { lat: 25.20, lon: 55.27, tz: 4 },
+        'singapore': { lat: 1.35, lon: 103.81, tz: 8 },
+        'tokyo': { lat: 35.67, lon: 139.65, tz: 9 },
+        'paris': { lat: 48.85, lon: 2.35, tz: 1 },
+        'berlin': { lat: 52.52, lon: 13.40, tz: 1 },
+        'rome': { lat: 41.90, lon: 12.49, tz: 1 }
+      };
+      
+      for (const [key, val] of Object.entries(cityDict)) {
+        if (p.includes(key) || key.includes(p)) {
+          return res.json({
+            place: place,
+            lat: val.lat,
+            lon: val.lon,
+            timezone: val.tz,
+            confidence: 'high-dict'
+          });
+        }
+      }
+
       // We'll perform free geocoding using OpenStreetMap Nominatim
       const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(place)}&format=json&limit=1`;
       
@@ -175,8 +213,15 @@ async function startServer() {
         return res.status(400).json({ error: 'Missing required birth details' });
       }
 
-      const report = await computeAstrologyWithFreeAstroApi(details);
-      return res.json(report);
+      // We explicitly bypass FreeAstroAPI to avoid tropical vs sidereal contamination,
+      // relying entirely on our local precision Astronomy Engine setup.
+      const { computeAstrology } = await import('./src/utils/astronomy.js');
+      const report = computeAstrology(details);
+      
+      return res.json({
+        ...report,
+        calculationSource: 'Precision Sidereal Vedic Engine'
+      });
     } catch (err: any) {
       console.error('Core calculation error:', err);
       return res.status(500).json({ error: 'Failed to calculate astrological data' });

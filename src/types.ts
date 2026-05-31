@@ -15,10 +15,14 @@ export interface PlanetPosition {
   sign: string;
   signSymbol: string;
   degree: number;
+  normDegree: number;
   house: number;
   retrograde: boolean;
+  combust: boolean;
   nakshatra: string;
+  pada: number;
   nakshatraLord: string;
+  relation?: string;
 }
 
 export interface HouseDetails {

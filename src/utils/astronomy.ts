@@ -233,15 +233,30 @@ export function computeAstrology(details: BirthDetails): AstrologyData {
       sign: rashi.name,
       signSymbol: rashi.symbol,
       degree: Number(rashi.degreeInSign.toFixed(2)),
+      normDegree: siderealCoords,
       house: houseNum,
       retrograde: tropicalCoords.retrograde,
+      combust: false, // will update later
       nakshatra: nakshatra.name,
-      nakshatraLord: nakshatra.lord
+      pada: nakshatra.pada,
+      nakshatraLord: nakshatra.lord,
+      relation: 'Neutral' // mock for now
     };
   });
 
   const sun = planets.find((p) => p.name === 'Sun')!;
   const moon = planets.find((p) => p.name === 'Moon')!;
+  
+  // Flag combust planets (within 8 degrees of Sun, excluding Sun and Nodes)
+  planets.forEach(p => {
+    if (p.name !== 'Sun' && p.name !== 'Rahu' && p.name !== 'Ketu') {
+      const dist = Math.abs(normalize360(p.normDegree - sun.normDegree));
+      if (dist < 8 || dist > 352) {
+        p.combust = true;
+      }
+    }
+  });
+
   const moonNakshatra = getNakshatraDetails(normalize360(getPlanetCoordinates('Moon', t, jd, utcDate).lon - ayanamsha));
 
   // 3. Detect Yogas (Combinations)
